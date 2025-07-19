@@ -20,13 +20,13 @@ const requestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: "pending" // initialement en attente
+    enum: ['pending', 'accepted', 'completed', 'cancelled'],
+    default: "pending"
   },
   paymentStatus: {
     type: String,
-    default: "unpaid" // par défaut non payé
+    default: "unpaid"
   },
-  // Champ de localisation version GeoJSON (pour maps)
   location: {
     type: {
       type: String,
@@ -40,7 +40,7 @@ const requestSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now // automatiquement rempli
+    default: Date.now
   },
   updatedAt: {
     type: Date,
