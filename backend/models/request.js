@@ -10,7 +10,7 @@ const requestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  problemType: {
+  problemCategory: {
     type: String,
     required: true
   },

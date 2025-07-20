@@ -6,10 +6,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
-import RequestRoutes from './routes/request.js';
+import requestRoutes from './routes/request.js';
  // Import des routes 
 
-dotenv.config();
+dotenv.config({ path: './backend/.env' });
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(express.json());
 connectDB();
 
 // Routes de l’administrateur (liste, acceptation, rejet, changement de statut,créer une demande, consulter ses demandes)
-app.use('/api', RequestRoutes);
+app.use('/api', requestRoutes);
 
 // Route d’accueil pour tester le serveur
 app.get('/', (req, res) => {

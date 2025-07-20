@@ -2,7 +2,7 @@
   "name": "passenger-journey-admin",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "backend/index.js",
   "scripts": {
     "dev": "nodemon backend/index.js"
   },
