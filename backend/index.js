@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import requestRoutes from './routes/request.js';
 import authRoutes from './routes/auth.js';
+import notificationRoutes from './routes/notification.js';
 
 dotenv.config({ path: './backend/.env' });
 console.log('JWT_SECRET loaded:', process.env.JWT_SECRET); // Ajoute ce log juste après
@@ -20,9 +21,10 @@ app.use(express.json());
 // Connexion à la base de données MongoDB
 connectDB();
 
-// Routes de l’administrateur (liste, acceptation, rejet, changement de statut,créer une demande, consulter ses demandes)
+// Routes de l’administrateur (liste, acceptation, rejet, changement de statut,créer une demande, consulter ses demandes,notifications)
 app.use('/api', requestRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Route d’accueil pour tester le serveur
 app.get('/', (req, res) => {

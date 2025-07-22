@@ -1,4 +1,7 @@
 import Request from '../models/request.js';
+import User from '../models/user.js';  
+import Notification from '../models/notification.js';
+
 
 // Créer une nouvelle demande (user)
 export const createRequest = async (req, res) => {
@@ -17,6 +20,15 @@ export const createRequest = async (req, res) => {
     });
 
     await newRequest.save();
+
+    // Créer une notification pour les admins
+    const adminUsers = await User.find({ role: 'admin' });
+    const notifications = adminUsers.map(admin => ({
+      userId: admin._id,
+      message: `Nouvelle demande de dépannage créée par ${req.user.email}`
+    }));
+    await Notification.insertMany(notifications);
+
     res.status(201).json(newRequest);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -90,6 +102,12 @@ export const updateRequestStatus = async (req, res) => {
     );
 
     if (!updatedRequest) return res.status(404).json({ message: "Request not found" });
+
+    // Notifier le passager
+    await Notification.create({
+      userId: updatedRequest.userId,
+      message: `Le statut de votre demande a été mis à jour : ${newStatus}`
+    });
 
     res.json(updatedRequest);
   } catch (error) {
