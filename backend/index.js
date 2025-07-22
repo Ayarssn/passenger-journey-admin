@@ -7,9 +7,10 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import requestRoutes from './routes/request.js';
- // Import des routes 
+import authRoutes from './routes/auth.js';
 
 dotenv.config({ path: './backend/.env' });
+console.log('JWT_SECRET loaded:', process.env.JWT_SECRET); // Ajoute ce log juste après
 
 const app = express();
 
@@ -21,6 +22,7 @@ connectDB();
 
 // Routes de l’administrateur (liste, acceptation, rejet, changement de statut,créer une demande, consulter ses demandes)
 app.use('/api', requestRoutes);
+app.use('/api/auth', authRoutes);
 
 // Route d’accueil pour tester le serveur
 app.get('/', (req, res) => {

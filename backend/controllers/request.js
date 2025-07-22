@@ -3,7 +3,8 @@ import Request from '../models/request.js';
 // Créer une nouvelle demande (user)
 export const createRequest = async (req, res) => {
   try {
-    const { userId, vehicleType, problemCategory, description, location } = req.body;
+    const { vehicleType, problemCategory, description, location } = req.body;
+    const userId = req.user.userId; // extrait du token
 
     const newRequest = new Request({
       userId,
@@ -25,7 +26,7 @@ export const createRequest = async (req, res) => {
 // Récupérer les demandes (user)
 export const getUserRequests = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.userId; // extrait du token
     const requests = await Request.find({ userId }).sort({ createdAt: -1 });
     res.json(requests);
   } catch (error) {
