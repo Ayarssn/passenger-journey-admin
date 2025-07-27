@@ -1,16 +1,22 @@
 import User from '../models/user.js';
-import jwt from 'jsonwebtoken';//librairie pour créer et vérifier les tokens JWT
-
-const JWT_SECRET = process.env.JWT_SECRET; // In production, use process.env.JWT_SECRET
+import jwt from 'jsonwebtoken';
+import { PASSENGER, ROLES } from '../utils/constants.js';
 
 // Register new user (admin or passenger)
 export const register = async (req, res) => {
   try {
-    //default to 'passenger'
-    const { email, password, role = 'passenger' } = req.body;
+    const {
+      email,
+      password,
+      role = PASSENGER,
+      cin,
+      phone,
+      firstName,
+      lastName
+    } = req.body;
 
     // Validate role
-    if (!['admin', 'passenger'].includes(role)) {
+    if (!ROLES.includes(role)) {
       return res.status(400).json({ message: 'Invalid role provided' });
     }
 
@@ -20,8 +26,17 @@ export const register = async (req, res) => {
       return res.status(409).json({ message: 'Email already in use' });
     }
 
-    // Create new user 
-    const newUser = new User({ email, password, role });
+    // Create new user
+    const newUser = new User({
+      email,
+      password,
+      role,
+      cin,
+      phone,
+      firstName,
+      lastName
+    });
+
     await newUser.save();
 
     res.status(201).json({ message: `User registered successfully as ${role}` });
@@ -39,15 +54,14 @@ export const login = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    // Crée le payload JWT : part of the token that contains the data
+
     const payload = {
       userId: user._id,
       email: user.email,
       role: user.role
     };
 
-    // Include role in token so frontend can redirect appropriately
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' })
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     res.json({
       token,
@@ -58,3 +72,11 @@ export const login = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+console.log('JWT_SECRET in login:', process.env.JWT_SECRET);
+
+export const logout = (req, res) => {
+  // No server-side token invalidation here (unless you implement blacklist)
+  res.json({ message: "Logout successful." });
+};
+

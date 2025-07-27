@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
+import { USER } from '../utils/constants.js';
 
 const notificationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // destinataire
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: USER, required: false }, // destinataire
   message: { type: String, required: true },
-  read: { type: Boolean, default: false },
+  isForAdmin: { type: Boolean, default: false },
+  seen: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

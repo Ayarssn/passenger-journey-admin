@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import { ROLES } from '../utils/constants.js';
+import { USER } from '../utils/constants.js';
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -12,10 +14,27 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   role: {
-  type: String,
-  enum: ['admin', 'passenger'],
+    type: String,
+    enum: ROLES,
+    required: true
+  },
+  cin: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  phone: {
+    type: String,
+    required: true
+  },
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
   }
-
 });
 
 // Hash password before saving
@@ -30,5 +49,6 @@ userSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model(USER , userSchema);
+
 export default User;

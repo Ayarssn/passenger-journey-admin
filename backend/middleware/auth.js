@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 
-
 //It will run before the actual controller in protected routes.
 //If the token is valid, it calls next() and allows the request to continue.
+
 const authenticate = (req, res, next) => {
   const JWT_SECRET = process.env.JWT_SECRET; //matches the one used when signing
   const authHeader = req.headers.authorization;

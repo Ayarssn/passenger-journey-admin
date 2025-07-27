@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
+import { USER } from '../utils/constants.js';
 
 // Définir le schéma
 const requestSchema = new mongoose.Schema({
   userId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: USER, // référence au modèle User
     required: true
   },
   vehicleType: {
@@ -28,15 +30,8 @@ const requestSchema = new mongoose.Schema({
     default: "unpaid"
   },
   location: {
-    type: {
       type: String,
-      enum: ['Point'],
-      default: 'Point'
-    },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      default: [0, 0]
-    }
+      required: true
   },
   createdAt: {
     type: Date,
@@ -48,7 +43,6 @@ const requestSchema = new mongoose.Schema({
   }
 });
 
-// Exporter le modèle
 const Request = mongoose.model("Request", requestSchema);
 
 export default Request;

@@ -2,15 +2,15 @@
 // Connecte MongoDB (via connectDB)
 // Charge les routes admin et user
 // Démarre le serveur sur le port 5000
-
-import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config({ path: './backend/.env' });
+import http from 'http';
+import { Server } from 'socket.io';
 import { connectDB } from './config/db.js';
 import requestRoutes from './routes/request.js';
 import authRoutes from './routes/auth.js';
 import notificationRoutes from './routes/notification.js';
-
-dotenv.config({ path: './backend/.env' });
+import express from 'express';
 console.log('JWT_SECRET loaded:', process.env.JWT_SECRET); // Ajoute ce log juste après
 
 const app = express();
@@ -20,6 +20,29 @@ app.use(express.json());
 
 // Connexion à la base de données MongoDB
 connectDB();
+
+// Création du serveur HTTP avec Express
+const server = http.createServer(app);
+
+// Initialisation de Socket.io
+const io = new Server(server, {             // <-- Création serveur Socket.io lié au serveur HTTP
+  cors: {
+    origin: '*', // Ajuster ici avec l'URL de ton frontend en prod
+    methods: ['GET', 'POST'],
+  },
+});
+
+// Rendre l'instance io accessible globalement dans l'app
+global.io = io; //Stockage global pour usage dans les controllers
+
+// Gestion des connexions Socket.io
+io.on('connection', (socket) => {
+  console.log('🟢 New client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('🔴 Client disconnected:', socket.id);
+  });
+});
 
 // Routes de l’administrateur (liste, acceptation, rejet, changement de statut,créer une demande, consulter ses demandes,notifications)
 app.use('/api', requestRoutes);
@@ -35,6 +58,6 @@ app.get('/', (req, res) => {
 console.log(process.env.MONGO_URI);
 
 // Démarrage du serveur
-app.listen(5000, () => {
+server.listen(5000, () => {
     console.log('Server started at http://localhost:5000');
 });

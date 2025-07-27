@@ -1,16 +1,19 @@
 import Request from '../models/request.js';
 import User from '../models/user.js';  
 import Notification from '../models/notification.js';
-
+import { ADMIN } from '../utils/constants.js';
+import mongoose from 'mongoose';
 
 // Créer une nouvelle demande (user)
-export const createRequest = async (req, res) => {
+export const create = async (req, res) => {
   try {
-    const { vehicleType, problemCategory, description, location } = req.body;
+    const {
+      vehicleType, problemCategory, description, location,
+    } = req.body;
     const userId = req.user.userId; // extrait du token
 
     const newRequest = new Request({
-      userId,
+      userId: new mongoose.Types.ObjectId(userId),
       vehicleType,
       problemCategory,
       description,
@@ -21,13 +24,17 @@ export const createRequest = async (req, res) => {
 
     await newRequest.save();
 
-    // Créer une notification pour les admins
-    const adminUsers = await User.find({ role: 'admin' });
-    const notifications = adminUsers.map(admin => ({
-      userId: admin._id,
-      message: `Nouvelle demande de dépannage créée par ${req.user.email}`
-    }));
-    await Notification.insertMany(notifications);
+    // Créer UNE seule notification destinée aux admins
+    await Notification.create({
+      message: `Nouvelle demande de dépannage créée par ${req.user.email}`,
+      isForAdmin: true
+    });
+
+    // Émettre la notification en temps réel à tous les admins connectés
+    global.io.emit('admin-notification', {
+      message: `Nouvelle demande de dépannage créée par passager avec email ${req.user.email}`
+    });
+
 
     res.status(201).json(newRequest);
   } catch (error) {
@@ -36,9 +43,9 @@ export const createRequest = async (req, res) => {
 };
 
 // Récupérer les demandes (user)
-export const getUserRequests = async (req, res) => {
+export const getUser = async (req, res) => {
   try {
-    const userId = req.user.userId; // extrait du token
+    const userId = req.user.userId;
     const requests = await Request.find({ userId }).sort({ createdAt: -1 });
     res.json(requests);
   } catch (error) {
@@ -47,7 +54,7 @@ export const getUserRequests = async (req, res) => {
 };
 
 // Annuler une demande (user)
-export const cancelRequest = async (req, res) => {
+export const cancel = async (req, res) => {
   try {
     const { id } = req.params;
     const request = await Request.findById(id);
@@ -68,7 +75,7 @@ export const cancelRequest = async (req, res) => {
 };
 
 // Récupérer toutes les demandes (admin)
-export const getAllRequests = async (req, res) => {
+export const getAll = async (req, res) => {
   try {
     const { status, vehicleType, startDate, endDate } = req.query;
     const filter = {};
@@ -82,7 +89,9 @@ export const getAllRequests = async (req, res) => {
       };
     }
 
-    const requests = await Request.find(filter);
+    const requests = await Request.find(filter)
+      .populate('userId', 'nom prenom email phone CIN') // look up the User document where userId, and bring back only the fields nom, prenom, email, phone, and CIN
+
     res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -90,7 +99,7 @@ export const getAllRequests = async (req, res) => {
 };
 
 // Modifier le statut d'une demande (admin)
-export const updateRequestStatus = async (req, res) => {
+export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { newStatus } = req.body;
@@ -106,6 +115,11 @@ export const updateRequestStatus = async (req, res) => {
     // Notifier le passager
     await Notification.create({
       userId: updatedRequest.userId,
+      message: `Le statut de votre demande a été mis à jour : ${newStatus}`
+    });
+
+    // Émettre la notification en temps réel au passager connecté
+    global.io.emit(`user-${updatedRequest.userId}`, {
       message: `Le statut de votre demande a été mis à jour : ${newStatus}`
     });
 
