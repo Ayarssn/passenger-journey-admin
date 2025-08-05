@@ -1,9 +1,11 @@
 {
+  "proxy": "http://localhost:5000",
   "name": "passenger-journey-admin",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "backend/index.js",
   "scripts": {
+    "start": "node backend/index.js",
     "dev": "nodemon backend/index.js"
   },
   "type": "module",
@@ -19,10 +21,13 @@
   },
   "homepage": "https://github.com/Ayarssn/passenger-journey-admin#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
-    "mongoose": "^8.16.3"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.3",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
