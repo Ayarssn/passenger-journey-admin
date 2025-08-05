@@ -8,17 +8,14 @@ export const register = async (req, res) => {
     const {
       email,
       password,
-      role = PASSENGER,
       cin,
       phone,
       firstName,
       lastName
     } = req.body;
 
-    // Validate role
-    if (!ROLES.includes(role)) {
-      return res.status(400).json({ message: 'Invalid role provided' });
-    }
+    // Always force role to 'passenger' for public registration
+    const role = PASSENGER;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -66,6 +63,11 @@ export const login = async (req, res) => {
     res.json({
       token,
       role: user.role,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      cin: user.cin,
       message: `Logged in as ${user.role}`
     });
   } catch (error) {

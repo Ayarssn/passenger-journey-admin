@@ -26,14 +26,18 @@ export const create = async (req, res) => {
 
     // Créer UNE seule notification destinée aux admins
     await Notification.create({
-      message: `Nouvelle demande de dépannage créée par ${req.user.email}`,
+      message: `New towing request created by ${req.user.email}`,
       isForAdmin: true
     });
 
     // Émettre la notification en temps réel à tous les admins connectés
     global.io.emit('admin-notification', {
-      message: `Nouvelle demande de dépannage créée par passager avec email ${req.user.email}`
+      message: `New towing request created by passenger with email ${req.user.email}`
     });
+
+    // Émettre l'événement de nouvelle demande pour mise à jour en temps réel
+    global.io.emit('request-created', newRequest);
+    global.io.emit('requests-updated'); // Signal général pour rafraîchir les listes
 
 
     res.status(201).json(newRequest);
@@ -46,7 +50,9 @@ export const create = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const requests = await Request.find({ userId }).sort({ createdAt: -1 });
+    const requests = await Request.find({ userId })
+      .populate('assignedBy', 'firstName lastName phone') // Populate admin info
+      .sort({ createdAt: -1 });
     res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -67,6 +73,14 @@ export const cancel = async (req, res) => {
     request.status = "cancelled";
     request.updatedAt = Date.now();
     await request.save();
+
+    // Émettre les événements WebSocket pour mise à jour en temps réel
+    global.io.emit('request-cancelled', request);
+    global.io.emit('requests-updated');
+    global.io.emit(`user-${request.userId}`, {
+      type: 'request-cancelled',
+      data: request
+    });
 
     res.json({ message: "Request cancelled", request });
   } catch (error) {
@@ -90,7 +104,7 @@ export const getAll = async (req, res) => {
     }
 
     const requests = await Request.find(filter)
-      .populate('userId', 'nom prenom email phone CIN') // look up the User document where userId, and bring back only the fields nom, prenom, email, phone, and CIN
+      .populate('userId', 'email phone cin firstName lastName') // look up the User document where userId, and bring back only the fields nom, prenom, email, phone, and CIN
 
     res.json(requests);
   } catch (error) {
@@ -103,25 +117,43 @@ export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { newStatus } = req.body;
+    const adminId = req.user.userId; // Get the admin who is updating the status
+
+    const updateData = { 
+      status: newStatus, 
+      updatedAt: Date.now() 
+    };
+    
+    // If status is being changed from pending to accepted, set assignedBy
+    if (newStatus === 'accepted') {
+      updateData.assignedBy = adminId;
+    }
 
     const updatedRequest = await Request.findByIdAndUpdate(
       id,
-      { status: newStatus, updatedAt: Date.now() },
+      updateData,
       { new: true }
-    );
+    ).populate('assignedBy', 'firstName lastName phone');
 
     if (!updatedRequest) return res.status(404).json({ message: "Request not found" });
 
     // Notifier le passager
     await Notification.create({
       userId: updatedRequest.userId,
-      message: `Le statut de votre demande a été mis à jour : ${newStatus}`
+      message: `The status of your request has been updated: ${newStatus}`
     });
 
     // Émettre la notification en temps réel au passager connecté
     global.io.emit(`user-${updatedRequest.userId}`, {
-      message: `Le statut de votre demande a été mis à jour : ${newStatus}`
+      message: `The status of your request has been updated: ${newStatus}`,
+      type: 'status-updated',
+      data: updatedRequest
     });
+
+    // Émettre les événements généraux pour mise à jour en temps réel
+    global.io.emit('request-status-updated', updatedRequest);
+    global.io.emit('requests-updated');
+    global.io.emit('notifications-updated');
 
     res.json(updatedRequest);
   } catch (error) {

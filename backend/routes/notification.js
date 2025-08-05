@@ -36,6 +36,20 @@ router.patch('/:id/mark-as-seen', authenticate, async (req, res) => {
     notif.seen = true;
     await notif.save();
 
+    // Émettre l'événement WebSocket pour mise à jour en temps réel
+    global.io.emit('notification-seen', notif);
+    global.io.emit('notifications-updated');
+    
+    // Émettre spécifiquement à l'utilisateur concerné
+    if (notif.userId) {
+      global.io.emit(`user-${notif.userId}`, {
+        type: 'notification-seen',
+        data: notif
+      });
+    } else if (notif.isForAdmin) {
+      global.io.emit('admin-notification-seen', notif);
+    }
+
     res.json({ message: 'Notification marquée comme lue', notification: notif });
   } catch (err) {
     res.status(500).json({ message: err.message });

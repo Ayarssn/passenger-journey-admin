@@ -33,6 +33,11 @@ const requestSchema = new mongoose.Schema({
       type: String,
       required: true
   },
+  assignedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: USER, // référence au modèle User (admin qui a accepté la demande)
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

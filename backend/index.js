@@ -11,9 +11,11 @@ import requestRoutes from './routes/request.js';
 import authRoutes from './routes/auth.js';
 import notificationRoutes from './routes/notification.js';
 import express from 'express';
+import cors from "cors";
 console.log('JWT_SECRET loaded:', process.env.JWT_SECRET); // Ajoute ce log juste après
 
 const app = express();
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 // Middleware pour lire les JSON dans les requêtes
 app.use(express.json());
